@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const ejs = require('ejs');
+const encrypt = require('mongoose-encryption');
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -10,10 +11,15 @@ app.use(express.static('public/'));
 
 mongoose.connect('mongodb://localhost:27017/userDB', {useNewUrlParser:true, useUnifiedTopology:true});
 
-const UserSchema = {
+const UserSchema = new mongoose.Schema(
+{
     email: String,
     password: String
-}
+});
+
+const secret = "Thisisasecretdude.";
+UserSchema.plugin(encrypt, {secret: secret, encryptedFields: ['password']});        //field to be encrypted is password and mongoose-encryption uses a secret to do that
+//mongoose-encrypt encrypts our encryptedFields on 'save'-ing them and then decrypts on 'find'-ing them.
 
 const User = mongoose.model("User",UserSchema);
 
