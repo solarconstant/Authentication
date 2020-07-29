@@ -1,3 +1,4 @@
+require('dotenv').config();     //as early as possible, dotenv is to be configured
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -17,7 +18,7 @@ const UserSchema = new mongoose.Schema(
     password: String
 });
 
-const secret = "Thisisasecretdude.";
+const secret = process.env.SECRET;
 UserSchema.plugin(encrypt, {secret: secret, encryptedFields: ['password']});        //field to be encrypted is password and mongoose-encryption uses a secret to do that
 //mongoose-encrypt encrypts our encryptedFields on 'save'-ing them and then decrypts on 'find'-ing them.
 
