@@ -3,6 +3,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const ejs = require('ejs');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;      //hashing rounds
 //const encrypt = require('mongoose-encryption');
 
 const app = express();
@@ -39,23 +41,25 @@ app.post('/register', (req, res) =>
 {
     email = req.body.email;
     password = req.body.password;
-
-    const newUser = new User(
-        {
-            email: email,
-            password: md5(password)     //turns this into an irreversible hash
-        }
-    )
-    newUser.save((err) =>
+    bcrypt.hash(password, saltRounds, (err, hash) =>
     {
-        if(err)
+        const newUser = new User(
+            {
+                email: email,
+                password: hash     //substituting the hash generated after salting for 10 rounds;
+            }
+        )
+        newUser.save((err) =>
         {
-            console.log(err);
-        }
-        else
-        {
-            res.redirect('/');
-        }
+            if(err)
+            {
+                console.log(err);
+            }
+            else
+            {
+                res.redirect('/');
+            }
+        });
     });
 });
 
@@ -67,7 +71,7 @@ app.get('/login', (req, res) =>
 app.post('/login', (req, res) => 
 {
     const email = req.body.email;
-    const password = md5(req.body.password);        //because the stored password is hash, to convert it back.
+    const password = req.body.password;        //because the stored password is hash, to convert it back.
 
     User.findOne({email: email}, (err, found) =>
     {
@@ -79,14 +83,17 @@ app.post('/login', (req, res) =>
         {
             if(found)
             {
-                if(found.password === password)
+                bcrypt.compare(password, found.password, (err, result) =>
                 {
-                    res.render('hidden');
-                }
-                else
-                {
-                    console.log("Wrong password!")
-                }
+                    if(result)
+                    {
+                        res.render('hidden')
+                    }
+                    else
+                    {
+                        console.log("Wrong password");
+                    }
+                });
             }
             else
             {
